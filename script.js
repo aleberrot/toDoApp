@@ -4,6 +4,7 @@ const tasks = document.getElementById('tasks');
 const taskList = document.getElementById('taskList');
 const removeTask = document.getElementById('removeTask');
 const clearTasks = document.getElementById('clearTasks');
+let createdTask = false;
 
 
 // TODO Handle the task
@@ -16,6 +17,7 @@ function handleTask() {
     // TODO Create a taskItem
     const taskValue = task.value;
     const taskItem = document.createElement('li');   
+    taskItem.id = setId();
     const taskItemText = document.createElement('span');
     const checkBox = document.createElement('input');
     checkBox.type = 'checkbox';
@@ -24,6 +26,10 @@ function handleTask() {
 
     //TODO Add drag and drop events
 
+    taskItem.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('text/plain', taskItem.id);
+    }
+    )
 
     taskItemText.textContent = taskValue;
     taskItem.appendChild(taskItemText);
@@ -73,6 +79,10 @@ function handleTask() {
         taskItem.appendChild(inputNewTask);
         taskItem.appendChild(saveButton);
     });
+    if (!createdTask) {
+        task.value = '';
+        createdTask = true;
+    }
 }
 
 // TODO Clear all tasks
@@ -83,15 +93,43 @@ function handleClearTasks() {
     return;
 }
 
+// TODO Create function set an id to each task
+function setId() {
+    return crypto.randomUUID();
+}
+
 // TODO Add event listener to the button addTask
-addTask.addEventListener('click', handleTask);
+addTask.addEventListener('click', ()=>{
+    handleTask();
+    createdTask = false;
+    console.log(taskList.children);
+});
 
 // TODO Add event listener to the button clearTasks
 clearTasks.addEventListener('click', handleClearTasks);
 
 // TODO Add event listener to task as dropzone
-task.addEventListener('drop', (e) => {
+taskList.addEventListener('dragover', (e) => {
     e.preventDefault();
-    task.value = e.dataTransfer.getData('text');
 }
 )
+
+taskList.addEventListener('drop', (e) => {
+    e.preventDefault();
+    const data = e.dataTransfer.getData('text/plain');
+    const  draggedElement = document.getElementById(data);
+    if (draggedElement === null) {
+        return;
+    }
+
+    let insertBeforeElement = null;
+
+    for (let child of taskList.children) {
+        const rect = child.getBoundingClientRect();
+        if (e.clientY < rect.top + rect.height / 2) {
+            insertBeforeElement = child;
+            break;
+        }
+    }
+    taskList.insertBefore(draggedElement, insertBeforeElement);
+})
